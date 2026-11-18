@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#070e25" />
+    <title>GPT-6.2 Astra制作水面无人艇</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' rx='9' fill='%23101d28'/%3E%3Ccircle cx='24' cy='24' r='19' fill='none' stroke='%23c1ac85'/%3E%3Cpath d='M11 31 27 9l-5 17 13-9-9 14H11zm2 4h20' fill='none' stroke='%23e1cea9' stroke-width='1.8' stroke-linejoin='round'/%3E%3C/svg%3E"
+    />
+  </head>
+  <body>
+    <header class="release-header">
+      <canvas id="stage-light" aria-hidden="true"></canvas>
+      <div class="topbar">
+        <div class="topbar-inner">
+          <svg class="brand-mark" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+            <circle cx="24" cy="24" r="19.5" stroke="currentColor" stroke-width=".85" />
+            <path d="M 24 1.7v4m0 36.6v4M1.7 24h4m36.6 0h4" stroke="currentColor" stroke-width="1.1" />
+            <path
+              d="M11 30.5 27 9l-5 17 13-9-9 13.5H11zm2 4.5h19"
+              stroke="currentColor"
+              stroke-width="1.65"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+          <nav class="mode-tabs" aria-label="工作模式">
+            <button type="button" data-mode="trial" aria-pressed="true">
+              <i data-icon="waves"></i>试航工作台
+            </button>
+            <button type="button" data-mode="inspect" aria-pressed="false">
+              <i data-icon="cube"></i>船模检视
+            </button>
+          </nav>
+          <button id="shortcuts" type="button" class="shortcut-button" title="查看快捷键">
+            <i data-icon="keyboard"></i><span>快捷键</span>
+          </button>
+        </div>
+      </div>
+      <section class="vessel-heading" aria-label="当前船模">
+        <h1>
+          <span class="maker">GPT-6.2 <em>Astra</em><small>制作</small></span
+          ><span class="vessel-title">水面无人艇</span>
+        </h1>
+      </section>
+    </header>
+    <main class="workspace">
+      <div class="work-grid">
+        <section id="scene-card" class="scene-card" aria-label="三维船模和实时遥测">
+          <div id="viewport" class="viewport">
+            <div id="scene-host" aria-label="交互式三维无人艇，可拖动旋转和滚轮缩放"></div>
+            <div class="view-status">
+              <span class="signal-dot"></span><span id="view-state">水面试航</span
+              ><span class="status-rule"></span><time id="clock">T+ 00:18</time>
+              <button id="run" class="view-transport" type="button" aria-label="暂停试航" title="暂停试航">
+                <i data-icon="pause"></i>
+              </button>
+            </div>
+            <button id="expand" class="expand" type="button" aria-label="全屏视窗" title="全屏视窗">
+              <i data-icon="fullscreen"></i>
+            </button>
+            <div id="views" class="view-controls" aria-label="视角"></div>
+            <div id="compass" class="compass" role="img" aria-label="相机相对正北的方位">
+              <svg class="compass-dial" viewBox="0 0 80 80" aria-hidden="true">
+                <circle
+                  cx="40"
+                  cy="40"
+                  r="36"
+                  fill="none"
+                  stroke="#ab9e85"
+                  stroke-width="3"
+                  pathLength="360"
+                  stroke-dasharray="1.2 3.8"
+                />
+                <circle
+                  cx="40"
+                  cy="40"
+                  r="35"
+                  fill="none"
+                  stroke="#e4d5b5"
+                  stroke-width="5"
+                  pathLength="360"
+                  stroke-dasharray="1.5 28.5"
+                />
+                <g
+                  fill="#d4d9ce"
+                  font-family="Georgia,serif"
+                  font-size="9"
+                  text-anchor="middle"
+                  dominant-baseline="central"
+                >
+                  <text x="40" y="13.5" fill="#edd9ad">N</text>
+                  <text x="66" y="40">E</text>
+                  <text x="40" y="66">S</text>
+                  <text x="14" y="40">W</text>
+                </g>
+                <path d="M40 18 46 40 40 37z" fill="#f2e3bf" />
+                <path d="M40 18 34 40 40 37z" fill="#bc9d69" />
+                <path d="M40 62 46 40 40 43z" fill="#71878a" />
+                <path d="M40 62 34 40 40 43z" fill="#a4b4ae" />
+                <circle cx="40" cy="40" r="3.2" fill="#192c35" stroke="#cfb98f" stroke-width="1.2" />
+              </svg>
+            </div>
+            <div id="scene-loading" class="scene-loading">正在装载船模…</div>
+          </div>
+          <dl class="telemetry" aria-label="实时遥测">
+            <div class="vessel-speed">
+              <dt>航速</dt>
+              <dd><span id="speed">0.00</span><small>m/s</small></dd>
+            </div>
+            <div class="vessel-heading-readout">
+              <dt>艏向</dt>
+              <dd class="bearing-value"><span id="heading">000.0</span><small>°</small></dd>
+              <dd class="bearing-tape" aria-hidden="true"><canvas id="heading-tape"></canvas></dd>
+            </div>
+            <div class="compact-stat turn-stat">
+              <dt>转艏角速度</dt>
+              <dd><span id="yaw-rate">0.0</span><small>°/s</small></dd>
+            </div>
+            <div class="compact-stat distance-stat">
+              <dt>累计航程</dt>
+              <dd><span id="distance">0.0</span><small>m</small></dd>
+            </div>
+          </dl>
+        </section>
+        <aside class="side-panel">
+          <section class="panel helm">
+            <div class="panel-heading">
+              <h2><i data-icon="sliders"></i>操纵台</h2>
+              <span class="panel-note" id="helm-mode">手动控制</span>
+            </div>
+            <div class="helm-body">
+              <div class="control-block">
+                <label for="rpm">螺旋桨转速</label
+                ><output id="rpm-value" for="rpm">1500 <small>rpm</small></output>
+                <input type="range" id="rpm" min="0" max="2400" step="10" value="1500" />
+                <div class="range-labels"><span>0</span><span>1200</span><span>2400</span></div>
+              </div>
+              <div class="rudder-row">
+                <figure class="rudder-feedback">
+                  <svg viewBox="0 0 96 54" aria-hidden="true">
+                    <path d="M9.5 32A41 41 0 0 1 48 5" fill="none" stroke="#ac8172" stroke-width="2" />
+                    <path d="M48 5A41 41 0 0 1 86.5 32" fill="none" stroke="#78a399" stroke-width="2" />
+                    <g id="rudder-graduations" stroke="#cfbfa3" stroke-width="1" />
+                    <g id="rudder-pointer" transform="rotate(24 48 46)">
+                      <path d="M48 12 51 47 48 45z" fill="#fff0c9" />
+                      <path d="M48 12 45 47 48 45z" fill="#b89b6b" />
+                    </g>
+                    <circle cx="48" cy="46" r="3.8" fill="#192d38" stroke="#d6be93" stroke-width="1.2" />
+                  </svg>
+                  <figcaption>实际舵角 <span id="rudder-actual">+12°</span></figcaption>
+                </figure>
+                <div class="control-block">
+                  <label for="rudder">目标舵角</label
+                  ><output id="rudder-value" for="rudder">+12 <small>°</small></output>
+                  <input type="range" id="rudder" min="-35" max="35" step="1" value="12" />
+                  <div class="range-labels"><span>左 −35°</span><span>0°</span><span>+35° 右</span></div>
+                </div>
+              </div>
+              <div class="preset-controls" aria-label="舵角预设">
+                <button type="button" data-rudder="-22"><i data-icon="left"></i>左转</button
+                ><button type="button" data-rudder="0"><i data-icon="straight"></i>回中</button
+                ><button type="button" data-rudder="22"><i data-icon="right"></i>右转</button>
+              </div>
+            </div>
+          </section>
+          <section id="track-panel" class="panel track-panel">
+            <div class="panel-heading">
+              <h2><i data-icon="track"></i>航迹记录</h2>
+              <span class="legend"><i></i>实际航迹</span>
+            </div>
+            <div class="map-wrap">
+              <canvas id="track-map" role="img" aria-label="局部平面的实时航迹，正北朝上"></canvas>
+            </div>
+            <div class="map-footer">
+              <span>E <b id="east">0.0</b> m</span><span>N <b id="north">0.0</b> m</span>
+            </div>
+          </section>
+          <section id="parts-panel" class="panel parts-panel" hidden>
+            <div class="panel-heading">
+              <h2><i data-icon="layers"></i>部件检视</h2>
+              <button id="export" type="button" class="export-button" hidden>
+                <i data-icon="download"></i><span>导出船模</span>
+              </button>
+            </div>
+            <button type="button" data-focus="mast">
+              <i data-icon="radio"></i><span><b>仪器桅杆</b><small>GNSS 天线 · 前向摄像头</small></span
+              ><i data-icon="arrow"></i>
+            </button>
+            <button type="button" data-focus="drive">
+              <i data-icon="stern"></i><span><b>水下推进组件</b><small>三叶螺旋桨 · 独立舵叶</small></span
+              ><i data-icon="arrow"></i>
+            </button>
+            <button type="button" data-focus="deck">
+              <i data-icon="cube"></i><span><b>甲板设备舱</b><small>主舱盖 · 检修舱口</small></span
+              ><i data-icon="arrow"></i>
+            </button>
+          </section>
+        </aside>
+      </div>
+      <footer class="work-footer">
+        <span><i data-icon="mouse"></i>拖动旋转<span class="footer-dot">·</span>滚轮或双指缩放</span
+        ><span id="model-note"><i data-icon="activity"></i>简化三自由度运动模型</span>
+      </footer>
+    </main>
+    <dialog id="help-dialog">
+      <div class="dialog-head">
+        <h2>快捷键</h2>
+        <button id="close-help" type="button" aria-label="关闭"><i data-icon="cross"></i></button>
+      </div>
+      <dl class="keys">
+        <div>
+          <dt>开始或暂停试航</dt>
+          <dd><kbd>空格</kbd></dd>
+        </div>
+        <div>
+          <dt>增减转速</dt>
+          <dd><kbd>W</kbd><kbd>S</kbd></dd>
+        </div>
+        <div>
+          <dt>左舵与右舵</dt>
+          <dd><kbd>A</kbd><kbd>D</kbd></dd>
+        </div>
+        <div>
+          <dt>舵角回中</dt>
+          <dd><kbd>C</kbd></dd>
+        </div>
+        <div>
+          <dt>切换视角</dt>
+          <dd><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><kbd id="horizon-key">4</kbd></dd>
+        </div>
+      </dl>
+    </dialog>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

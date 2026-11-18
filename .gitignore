@@ -1,0 +1,9 @@
+node_modules/
+dist/
+docs/*.aux
+docs/*.fdb_latexmk
+docs/*.fls
+docs/*.log
+docs/*.out
+docs/*.synctex.gz
+docs/*.xdv
